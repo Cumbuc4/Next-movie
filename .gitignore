@@ -1,0 +1,10 @@
+/node_modules
+/.next
+.env*
+!.env.example
+.vercel
+prisma/dev.db
+prisma/dev.db-journal
+
+# macOS
+.DS_Store
