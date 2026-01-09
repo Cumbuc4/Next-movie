@@ -12,14 +12,16 @@ const registerSchema = z.object({
     .min(3, "O nome de usuário deve ter pelo menos 3 caracteres")
     .max(24, "O nome de usuário deve ter no máximo 24 caracteres")
     .regex(USERNAME_REGEX, "Use apenas letras e números no nome de usuário."),
+  email: z.string().email("Email inválido.").nullable().optional(),
 });
 
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    const { name, username } = registerSchema.parse(json);
+    const { name, username, email } = registerSchema.parse(json);
 
     const normalizedUsername = username.toLowerCase();
+    const normalizedEmail = email ? email.toLowerCase() : null;
 
     const existing = await db.user.findUnique({
       where: { username: normalizedUsername },
@@ -30,6 +32,20 @@ export async function POST(request: Request) {
         { error: "Este nome de usuário já está em uso. Escolha outro." },
         { status: 409 },
       );
+    }
+
+    if (normalizedEmail) {
+      const existingEmail = await db.user.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true },
+      });
+
+      if (existingEmail) {
+        return NextResponse.json(
+          { error: "Este email já está em uso. Escolha outro." },
+          { status: 409 },
+        );
+      }
     }
 
     let loginCode = "";
@@ -49,14 +65,14 @@ export async function POST(request: Request) {
       }
       if (attempts === 5) {
         return NextResponse.json(
-          { error: "Nao foi possivel gerar um codigo exclusivo. Tente novamente." },
+          { error: "Não foi possível gerar um código exclusivo. Tente novamente." },
           { status: 500 },
         );
       }
     }
 
     const user = await db.user.create({
-      data: { name, username: normalizedUsername, loginCodeHash },
+      data: { name, username: normalizedUsername, loginCodeHash, email: normalizedEmail },
       select: { username: true },
     });
 

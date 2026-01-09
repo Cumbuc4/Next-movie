@@ -74,6 +74,7 @@ model ListItem {
   releaseDate  DateTime?
   addedAt      DateTime  @default(now())
   watched      Boolean   @default(false)
+  archived     Boolean   @default(false)
   owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   picks        PickHistory[]
   sharedPicks  SharedPickHistory[]

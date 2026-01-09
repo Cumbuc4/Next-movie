@@ -1,16 +1,16 @@
-# Next Movie
+# Time2Watch
 
-Aplicação SaaS construída com Next.js 15 para criar listas de filmes e séries, integrar com TMDB e realizar sorteios individuais ou em dupla.
+Aplicacao SaaS construida com Next.js 15 para criar listas de filmes e series, integrar com TMDB e realizar sorteios individuais ou em dupla.
 
 ## Requisitos
 
 - Node.js 18+
 - PostgreSQL (Vercel Postgres recomendado)
 
-## Configuração
+## Configuracao
 
-1. Copie `.env.example` para `.env.local` e preencha as variáveis.
-2. Execute as migrações do Prisma:
+1. Copie `.env.example` para `.env.local` e preencha as variaveis.
+2. Execute as migracoes do Prisma:
 
 ```bash
 npx prisma migrate dev --name init
@@ -25,8 +25,8 @@ npm run dev
 ## Scripts principais
 
 - `npm run dev`: inicia o servidor Next.js
-- `npm run build`: gera build de produção
-- `npm run start`: inicia em modo produção
+- `npm run build`: gera build de producao
+- `npm run start`: inicia em modo producao
 - `npm run lint`: executa ESLint
 - `npm run prisma:migrate`: executa `prisma migrate dev`
 - `npm run prisma:generate`: gera o cliente Prisma
@@ -34,15 +34,15 @@ npm run dev
 ## Estrutura
 
 - `src/app`: rotas (marketing, login, dashboard, listagem) e APIs (Auth.js, TMDB, lista, sorteios)
-- `src/lib`: utilitários compartilhados (`db`, `auth`, `tmdb`)
-- `prisma/schema.prisma`: modelo de dados com listas, amizades e histórico de sorteios
+- `src/lib`: utilitarios compartilhados (`db`, `auth`, `tmdb`)
+- `prisma/schema.prisma`: modelo de dados com listas, amizades e historico de sorteios
 
-## Segurança
+## Seguranca
 
 - Hash de senha com Argon2 via Auth.js
 - Sorteios em dupla restritos a amizades aprovadas
-- Sessões persistidas em banco com NextAuth
+- Sessoes persistidas em banco com NextAuth
 
-## Créditos
+## Creditos
 
-Baseado no plano de produto Next Movie com foco em experiências de assistir em dupla.
+Baseado no plano de produto Time2Watch com foco em experiencias de assistir em dupla.

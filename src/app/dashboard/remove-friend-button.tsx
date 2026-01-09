@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RemoveFriendState, removeFriend } from "./actions";
+import { useActionState } from "@/lib/use-action-state";
 
 const initialState: RemoveFriendState = {};
 
@@ -22,12 +23,12 @@ export function RemoveFriendButton({ friendId }: RemoveFriendButtonProps) {
   }, [state?.success, router, startTransition]);
 
   return (
-    <form action={formAction} className="mt-3 space-y-2">
+    <form onSubmit={formAction} className="mt-3 space-y-2">
       <input type="hidden" name="friendId" value={friendId} />
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-md border border-red-500/30 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 hover:text-red-200 disabled:opacity-60"
+        className="w-full rounded-full border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/15 hover:text-red-200 disabled:opacity-60"
       >
         {isPending ? "Removendo..." : "Remover amizade"}
       </button>

@@ -54,8 +54,8 @@ export async function POST(request: Request) {
   }
 
   const [mine, theirs] = await Promise.all([
-    db.listItem.findMany({ where: { ownerId: userId, watched: false } }),
-    db.listItem.findMany({ where: { ownerId: partnerId, watched: false } }),
+    db.listItem.findMany({ where: { ownerId: userId, watched: false, archived: false } }),
+    db.listItem.findMany({ where: { ownerId: partnerId, watched: false, archived: false } }),
   ]);
 
   const pool = [...mine, ...theirs];

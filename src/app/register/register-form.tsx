@@ -14,6 +14,7 @@ type RegisterResponse = {
 export function RegisterForm() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [createdLoginCode, setCreatedLoginCode] = useState<string | null>(null);
   const [createdUsername, setCreatedUsername] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export function RegisterForm() {
 
     const safeUsername = username.trim().toLowerCase();
     if (!USERNAME_REGEX.test(username) || safeUsername.length < 3 || safeUsername.length > 24) {
-      setError("Escolha um nome de usuario com 3-24 letras ou numeros.");
+      setError("Escolha um nome de usuário com 3-24 letras ou números.");
       return;
     }
 
@@ -38,12 +39,16 @@ export function RegisterForm() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ name: name.trim(), username: safeUsername }),
+          body: JSON.stringify({
+            name: name.trim(),
+            username: safeUsername,
+            email: email.trim() ? email.trim().toLowerCase() : null,
+          }),
         });
 
         if (!response.ok) {
           const data = await response.json().catch(() => null);
-          setError(data?.error ?? "Nao foi possivel criar sua conta.");
+          setError(data?.error ?? "Não foi possível criar sua conta.");
           return;
         }
 
@@ -52,6 +57,7 @@ export function RegisterForm() {
         setCreatedUsername(data.username);
         setName("");
         setUsername("");
+        setEmail("");
       } catch (requestError) {
         console.error(requestError);
         setError("Ocorreu um erro inesperado. Tente novamente.");
@@ -61,6 +67,9 @@ export function RegisterForm() {
 
   const copyToClipboard = async (value: string, target: "code" | "username") => {
     try {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+        return;
+      }
       await navigator.clipboard.writeText(value);
       if (target === "code") {
         setCopiedCode(true);
@@ -79,11 +88,11 @@ export function RegisterForm() {
       <div className="space-y-5 rounded-lg border border-emerald-500/20 bg-neutral-900/50 p-6">
         <h2 className="text-xl font-semibold text-emerald-400">Conta criada com sucesso!</h2>
         <p className="text-sm text-neutral-300">
-          Guarde os dados abaixo. Use o codigo de acesso para entrar e compartilhe seu nome de usuario com amigos para conectarem-se.
+          Guarde os dados abaixo. Use o código de acesso para entrar e compartilhe seu nome de usuário com amigos para conectarem-se.
         </p>
         <div className="space-y-3">
           <div>
-            <p className="text-xs uppercase tracking-widest text-neutral-500">Codigo de acesso</p>
+            <p className="text-xs uppercase tracking-widest text-neutral-500">Código de acesso</p>
             <div className="mt-1 flex items-center justify-between gap-3 rounded-md border border-dashed border-emerald-500/40 bg-neutral-950 px-4 py-3">
               <span className="font-mono text-lg tracking-wider text-emerald-300">{createdLoginCode}</span>
               <button
@@ -96,7 +105,7 @@ export function RegisterForm() {
             </div>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-widest text-neutral-500">Nome de usuario</p>
+            <p className="text-xs uppercase tracking-widest text-neutral-500">Nome de usuário</p>
             <div className="mt-1 flex items-center justify-between gap-3 rounded-md border border-dashed border-emerald-500/40 bg-neutral-950 px-4 py-3">
               <span className="font-mono text-lg tracking-wider text-emerald-300">{createdUsername}</span>
               <button
@@ -152,8 +161,25 @@ export function RegisterForm() {
         />
       </div>
       <div className="space-y-1">
+        <label className="text-sm text-neutral-300" htmlFor="email">
+          Email para recuperação (opcional)
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none"
+          placeholder="você@email.com"
+          autoComplete="email"
+        />
+        <p className="text-xs text-neutral-500">
+          Use este email para recuperar seu código se esquecer.
+        </p>
+      </div>
+      <div className="space-y-1">
         <label className="text-sm text-neutral-300" htmlFor="username">
-          Escolha um nome de usuario unico
+          Escolha um nome de usuário único
         </label>
         <input
           id="username"
@@ -170,7 +196,7 @@ export function RegisterForm() {
           placeholder="ex: FILMELOVER123"
           pattern="[A-Za-z0-9]+"
         />
-        <p className="text-xs text-neutral-500">Somente letras e numeros, ate 24 caracteres.</p>
+        <p className="text-xs text-neutral-500">Somente letras e números, até 24 caracteres.</p>
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
       <button
@@ -178,7 +204,7 @@ export function RegisterForm() {
         disabled={isPending}
         className="w-full rounded-lg bg-emerald-500 px-4 py-3 font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
       >
-        {isPending ? "Gerando codigo..." : "Criar codigo de acesso"}
+        {isPending ? "Gerando código..." : "Criar código de acesso"}
       </button>
     </form>
   );

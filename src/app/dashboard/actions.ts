@@ -5,16 +5,25 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PrismaRateLimiter } from "@/lib/rate-limit";
+import { avatarOptions } from "@/lib/avatar-options";
 
 const USERNAME_REGEX = /^[a-z0-9]+$/i;
 const friendRequestLimiter = new PrismaRateLimiter(10 * 60 * 1000, 8);
 
+export type PickedItem = {
+  id: string;
+  tmdbId: number;
+  title: string;
+  overview: string | null;
+  type: "MOVIE" | "TV";
+  posterPath: string | null;
+  backdropPath: string | null;
+  releaseDate: string | null;
+};
+
 export type PickSoloState = {
   message?: string;
-  picked?: {
-    id: string;
-    title: string;
-  };
+  picked?: PickedItem;
 };
 
 export async function pickSolo(prevState: PickSoloState, formData: FormData): Promise<PickSoloState> {
@@ -29,7 +38,7 @@ export async function pickSolo(prevState: PickSoloState, formData: FormData): Pr
   }
 
   const items = await db.listItem.findMany({
-    where: { ownerId: userId, watched: false },
+    where: { ownerId: userId, watched: false, archived: false },
   });
 
   if (items.length === 0) {
@@ -44,14 +53,25 @@ export async function pickSolo(prevState: PickSoloState, formData: FormData): Pr
 
   revalidatePath("/dashboard");
 
-  return { picked: { id: picked.id, title: picked.title } };
+  return {
+    picked: {
+      id: picked.id,
+      tmdbId: picked.tmdbId,
+      title: picked.title,
+      overview: picked.overview,
+      type: picked.type,
+      posterPath: picked.posterPath,
+      backdropPath: picked.backdropPath,
+      releaseDate: picked.releaseDate?.toISOString() ?? null,
+    },
+  };
 }
 
 const PickWithSchema = z.object({ partnerId: z.string().cuid() });
 
 export type PickWithState = {
   error?: string;
-  success?: string;
+  picked?: PickedItem;
 };
 
 export async function pickWith(prevState: PickWithState, formData: FormData): Promise<PickWithState> {
@@ -89,8 +109,8 @@ export async function pickWith(prevState: PickWithState, formData: FormData): Pr
   }
 
   const [mine, theirs] = await Promise.all([
-    db.listItem.findMany({ where: { ownerId: userId, watched: false } }),
-    db.listItem.findMany({ where: { ownerId: partnerId, watched: false } }),
+    db.listItem.findMany({ where: { ownerId: userId, watched: false, archived: false } }),
+    db.listItem.findMany({ where: { ownerId: partnerId, watched: false, archived: false } }),
   ]);
 
   const pool = [...mine, ...theirs];
@@ -109,7 +129,18 @@ export async function pickWith(prevState: PickWithState, formData: FormData): Pr
   });
 
   revalidatePath("/dashboard");
-  return { success: picked.title };
+  return {
+    picked: {
+      id: picked.id,
+      tmdbId: picked.tmdbId,
+      title: picked.title,
+      overview: picked.overview,
+      type: picked.type,
+      posterPath: picked.posterPath,
+      backdropPath: picked.backdropPath,
+      releaseDate: picked.releaseDate?.toISOString() ?? null,
+    },
+  };
 }
 
 const AddFriendSchema = z.object({
@@ -165,6 +196,10 @@ export async function addFriend(prevState: AddFriendState, formData: FormData): 
     return { error: "Nome de usuário não encontrado." };
   }
 
+  if (friend.id === userId) {
+    return { error: "Você não pode enviar convite para si mesmo." };
+  }
+
   const existingFriendship = await db.friendship.findFirst({
     where: {
       OR: [
@@ -211,6 +246,142 @@ export async function addFriend(prevState: AddFriendState, formData: FormData): 
   return {
     success: `Convite enviado para ${friend.name ?? friend.username}. Aguarde a confirmação.`,
   };
+}
+
+const UpdateProfileSchema = z.object({
+  name: z.string().trim().max(60),
+  username: z
+    .string()
+    .trim()
+    .min(3, "Informe um nome de usuário válido.")
+    .max(24, "Informe um nome de usuário válido.")
+    .regex(USERNAME_REGEX, "Informe um nome de usuário válido."),
+  image: z.string().trim().max(300),
+  email: z.string().trim().max(160),
+});
+
+export type UpdateProfileState = {
+  error?: string;
+  success?: string;
+};
+
+export async function updateProfile(
+  prevState: UpdateProfileState,
+  formData: FormData,
+): Promise<UpdateProfileState> {
+  void prevState;
+
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return { error: "Sess?o expirada" };
+  }
+
+  const parsed = UpdateProfileSchema.safeParse({
+    name: typeof formData.get("name") === "string" ? formData.get("name") : "",
+    username: typeof formData.get("username") === "string" ? formData.get("username") : "",
+    image: typeof formData.get("image") === "string" ? formData.get("image") : "",
+    email: typeof formData.get("email") === "string" ? formData.get("email") : "",
+  });
+
+  if (!parsed.success) {
+    return { error: "Dados inv?lidos." };
+  }
+
+  const rawName = parsed.data.name.trim();
+  const rawUsername = parsed.data.username.trim();
+  const rawImage = parsed.data.image.trim();
+  const rawEmail = parsed.data.email.trim();
+
+  if (rawName && rawName.length < 2) {
+    return { error: "Informe um nome com pelo menos 2 letras." };
+  }
+
+  if (rawEmail) {
+    const emailParsed = z.string().email("Email inv?lido.").safeParse(rawEmail);
+    if (!emailParsed.success) {
+      return { error: emailParsed.error.issues[0]?.message ?? "Email inv?lido." };
+    }
+  }
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, username: true, name: true, image: true, email: true },
+  });
+
+  if (!user) {
+    return { error: "Conta n?o encontrada." };
+  }
+
+  const nextUsername = rawUsername.toLowerCase();
+  const nextEmail = rawEmail ? rawEmail.toLowerCase() : null;
+  const nextImage = rawImage ? rawImage : null;
+
+  if (nextImage !== (user.image ?? null) && nextImage && !avatarOptions.includes(nextImage)) {
+    return { error: "Escolha um avatar v?lido." };
+  }
+
+  if (nextUsername !== user.username) {
+    const existing = await db.user.findUnique({
+      where: { username: nextUsername },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return { error: "Nome de usu?rio j? est? em uso." };
+    }
+  }
+
+  if (nextEmail && nextEmail !== (user.email ?? null)) {
+    const existingEmail = await db.user.findUnique({
+      where: { email: nextEmail },
+      select: { id: true },
+    });
+
+    if (existingEmail) {
+      return { error: "Email j? est? em uso." };
+    }
+  }
+
+  const nextName = rawName ? rawName : null;
+  const updates: {
+    name?: string | null;
+    username?: string;
+    image?: string | null;
+    email?: string | null;
+  } = {};
+
+  if (nextUsername !== user.username) {
+    updates.username = nextUsername;
+  }
+  if (nextName !== (user.name ?? null)) {
+    updates.name = nextName;
+  }
+  if (nextImage !== (user.image ?? null)) {
+    updates.image = nextImage;
+  }
+  if (nextEmail !== (user.email ?? null)) {
+    updates.email = nextEmail;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return { success: "Nenhuma altera??o encontrada." };
+  }
+
+  await db.user.update({
+    where: { id: userId },
+    data: updates,
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/profile");
+
+  if (updates.username) {
+    return { success: "Dados atualizados. Saia e entre novamente para ver o novo ID em todo o app." };
+  }
+
+  return { success: "Dados atualizados." };
 }
 
 const RespondSchema = z.object({
@@ -353,18 +524,18 @@ export async function removeFriend(
   const userId = session?.user?.id;
 
   if (!userId) {
-    return { error: "Sessǜo expirada" };
+    return { error: "Sess?o expirada" };
   }
 
   const parsed = RemoveFriendSchema.safeParse({ friendId: formData.get("friendId") });
   if (!parsed.success) {
-    return { error: "Amigo invǭlido." };
+    return { error: "Amigo inv?lido." };
   }
 
   const friendId = parsed.data.friendId;
 
   if (friendId === userId) {
-    return { error: "Amigo invǭlido." };
+    return { error: "Amigo inv?lido." };
   }
 
   const friendship = await db.friendship.findFirst({
@@ -378,7 +549,7 @@ export async function removeFriend(
   });
 
   if (!friendship) {
-    return { error: "Amizade nǜo encontrada." };
+    return { error: "Amizade n?o encontrada." };
   }
 
   await db.friendship.delete({ where: { id: friendship.id } });

@@ -4,10 +4,6 @@ import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { SoloPicker } from "./solo-picker";
 import { PartnerPicker } from "./partner-picker";
-import { AddFriendForm } from "./add-friend-form";
-import { IncomingFriendRequests, OutgoingFriendRequests } from "./friend-requests";
-import { ListCarousel } from "./list-carousel";
-import { RemoveFriendButton } from "./remove-friend-button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -73,113 +69,80 @@ export default async function DashboardPage() {
     },
   }));
 
-  const listItems = user.items.map((item) => ({
-    id: item.id,
-    title: item.title,
-    backdropPath: item.backdropPath,
-    posterPath: item.posterPath,
-    overview: item.overview,
-    type: item.type,
-  }));
+  const activeItems = user.items.filter((item) => !item.archived);
+  const movieCount = activeItems.filter((item) => item.type === "MOVIE").length;
+  const tvCount = activeItems.filter((item) => item.type === "TV").length;
+  const pendingInvites = incomingRequests.length + outgoingRequests.length;
+
+  const stats = [
+    { label: "Títulos", value: activeItems.length, note: "na sua lista" },
+    { label: "Filmes", value: movieCount, note: "marcados" },
+    { label: "Séries", value: tvCount, note: "marcadas" },
+    { label: "Convites", value: pendingInvites, note: "pendentes" },
+  ];
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10">
-      <header className="flex flex-col gap-3 border-b border-neutral-800 pb-6">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-widest text-neutral-500">Nome de usuario</p>
-          <p className="font-mono text-sm text-neutral-300">{user.username}</p>
-          <p className="text-xs text-neutral-500">
-            Seu codigo de acesso e exibido apenas durante o cadastro. Guarde-o em um local seguro.
-          </p>
-        </div>
-        <h1 className="text-3xl font-semibold">Ola, {user.name ?? user.username}</h1>
-        <p className="text-neutral-400">
-          Gerencie sua lista de filmes e series, convide amigos e sorteie o proximo item para assistir.
-        </p>
-        <div className="flex flex-wrap items-center gap-4">
-          <Link className="text-sm text-emerald-400 hover:text-emerald-300" href="/list">
-            Adicionar novos titulos
-          </Link>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button className="text-sm text-neutral-400 transition hover:text-neutral-200" type="submit">
-              Encerrar sessao
-            </button>
-          </form>
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
+      <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/70 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/15 blur-[140px]" />
+        <div className="pointer-events-none absolute -left-20 bottom-0 h-40 w-40 rounded-full bg-blue-500/10 blur-[120px]" />
+        <div className="relative flex flex-col gap-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-widest text-neutral-500">Nome de usuário</p>
+              <p className="font-mono text-sm text-neutral-200">{user.username}</p>
+              <p className="text-xs text-neutral-500">
+                Seu código de acesso aparece apenas no cadastro. Guarde-o em local seguro.
+              </p>
+              <h1 className="pt-2 text-3xl font-semibold">Olá, {user.name ?? user.username}</h1>
+              <p className="max-w-2xl text-sm text-neutral-400">
+                Gerencie sua lista, convide amigos e sorteie o próximo título para assistir.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                className="rounded-full bg-emerald-400 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-emerald-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-300"
+                href="/list"
+              >
+                Adicionar novos títulos
+              </Link>
+              <form
+                action={async () => {
+                  "use server";
+                  await signOut({ redirectTo: "/login" });
+                }}
+              >
+                <button
+                  className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-300 transition hover:border-white/25 hover:text-neutral-100"
+                  type="submit"
+                >
+                  Encerrar sessão
+                </button>
+              </form>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-white/10 bg-neutral-950/80 p-4"
+              >
+                <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">
+                  {stat.label}
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-neutral-100">{stat.value}</p>
+                <p className="text-xs text-neutral-500">{stat.note}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </header>
-
-      <section className="grid gap-6 md:grid-cols-3">
-        <AddFriendForm />
-        <IncomingFriendRequests requests={incomingRequests} />
-        <OutgoingFriendRequests requests={outgoingRequests} />
-      </section>
-
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Seus amigos</h2>
-        <p className="mb-4 text-sm text-neutral-400">
-          Compartilhe seu nome de usuario para conectar e liberar os sorteios em dupla.
-        </p>
-        <ul className="grid gap-3 sm:grid-cols-2 text-sm text-neutral-300">
-          {friends.length === 0 && <li>Nenhum amigo adicionado ainda.</li>}
-          {friends.map((friend) => (
-            <li key={friend.id} className="rounded-md border border-neutral-800 bg-neutral-950/60 p-4">
-              <span className="block font-semibold text-neutral-100">{friend.name ?? friend.username}</span>
-              <span className="font-mono text-xs uppercase tracking-wide text-neutral-500">
-                {friend.username}
-              </span>
-              <RemoveFriendButton friendId={friend.id} />
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <section className="grid gap-6 md:grid-cols-2">
         <SoloPicker />
         <PartnerPicker friends={friends} />
       </section>
 
-      <section className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-xl font-semibold">Selecionados por voce</h2>
-          <p className="text-sm text-neutral-400">
-            Gire o carrossel para encontrar o proximo destaque que voce adicionou a sua lista.
-          </p>
-        </div>
-        <ListCarousel items={listItems} />
-      </section>
-
-      <section className="grid gap-6 md:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold">Historico individual</h2>
-          <ul className="mt-4 space-y-3 text-sm text-neutral-400">
-            {user.pickHistory.map((entry) => (
-              <li key={entry.id}>
-                <span className="font-medium text-neutral-100">{entry.item.title}</span> em {" "}
-                {entry.pickedAt.toLocaleDateString("pt-BR")}
-              </li>
-            ))}
-            {user.pickHistory.length === 0 && <li>Ainda sem sorteios.</li>}
-          </ul>
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold">Historico em dupla</h2>
-          <ul className="mt-4 space-y-3 text-sm text-neutral-400">
-            {user.sharedPickHistory.map((entry) => (
-              <li key={entry.id}>
-                Voce e {entry.partner.name ?? entry.partner.username} sortearam
-                <span className="font-medium text-neutral-100"> {entry.item.title}</span> em {" "}
-                {entry.pickedAt.toLocaleDateString("pt-BR")}
-              </li>
-            ))}
-            {user.sharedPickHistory.length === 0 && <li>Ainda sem sorteios em dupla.</li>}
-          </ul>
-        </div>
-      </section>
     </main>
   );
 }

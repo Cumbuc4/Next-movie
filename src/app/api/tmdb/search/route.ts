@@ -9,10 +9,13 @@ interface TMDBSearchResult {
     overview?: string;
     poster_path?: string;
     backdrop_path?: string;
-    media_type: "movie" | "tv";
+    media_type: "movie" | "tv" | "person";
     release_date?: string;
     first_air_date?: string;
     popularity?: number;
+    genre_ids?: number[];
+    vote_average?: number;
+    vote_count?: number;
   }>;
 }
 
@@ -33,7 +36,9 @@ export async function GET(request: Request) {
     },
   });
 
-  const filtered = data.results.filter((item) => item.media_type === "movie" || item.media_type === "tv");
+  const filtered = data.results.filter(
+    (item) => item.media_type === "movie" || item.media_type === "tv",
+  );
   const sorted = filtered.sort(
     (a, b) => (b.popularity ?? 0) - (a.popularity ?? 0),
   );
@@ -43,11 +48,14 @@ export async function GET(request: Request) {
       id: item.id,
       title: item.title ?? item.name ?? "",
       overview: item.overview ?? "",
-      posterPath: item.poster_path ?? "",
-      backdropPath: item.backdrop_path ?? "",
+      posterPath: item.poster_path ?? null,
+      backdropPath: item.backdrop_path ?? null,
       type: item.media_type.toUpperCase(),
       releaseDate: item.release_date ?? item.first_air_date ?? null,
       popularity: item.popularity ?? 0,
+      genreIds: item.genre_ids ?? [],
+      voteAverage: item.vote_average ?? 0,
+      voteCount: item.vote_count ?? 0,
     })),
   );
 }

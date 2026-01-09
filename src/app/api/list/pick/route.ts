@@ -32,7 +32,7 @@ export async function POST() {
   }
 
   const items = await db.listItem.findMany({
-    where: { ownerId: userId, watched: false },
+    where: { ownerId: userId, watched: false, archived: false },
   });
 
   if (items.length === 0) {

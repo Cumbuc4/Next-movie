@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   FriendRequestActionState,
   cancelFriendRequest,
   respondFriendRequest,
 } from "./actions";
+import { useActionState } from "@/lib/use-action-state";
 
 type IncomingRequest = {
   id: string;
@@ -40,7 +41,7 @@ export function IncomingFriendRequests({ requests }: { requests: IncomingRequest
   }, [state?.success, router, startTransition]);
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/70 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
       <h2 className="text-xl font-semibold">Solicitações recebidas</h2>
       <p className="mb-4 text-sm text-neutral-400">
         Aceite apenas convites de pessoas que você conhece. Você pode recusar se não reconhecer o usuário.
@@ -50,7 +51,10 @@ export function IncomingFriendRequests({ requests }: { requests: IncomingRequest
       <ul className="space-y-4 text-sm text-neutral-300">
         {requests.length === 0 && <li>Nenhuma solicitação pendente.</li>}
         {requests.map((request) => (
-          <li key={request.id} className="rounded-md border border-neutral-800 bg-neutral-950/60 p-4">
+          <li
+            key={request.id}
+            className="rounded-xl border border-white/10 bg-neutral-950/80 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+          >
             <div className="flex flex-col gap-1">
               <span className="font-semibold text-neutral-100">
                 {request.requester.name ?? request.requester.username}
@@ -63,7 +67,7 @@ export function IncomingFriendRequests({ requests }: { requests: IncomingRequest
               </span>
             </div>
             <div className="mt-3 flex items-center gap-2">
-              <form action={formAction} className="flex-1">
+              <form onSubmit={formAction} className="flex-1">
                 <input type="hidden" name="requestId" value={request.id} />
                 <input type="hidden" name="decision" value="accept" />
                 <button
@@ -74,7 +78,7 @@ export function IncomingFriendRequests({ requests }: { requests: IncomingRequest
                   {isPending ? "Processando..." : "Aceitar"}
                 </button>
               </form>
-              <form action={formAction} className="flex-1">
+              <form onSubmit={formAction} className="flex-1">
                 <input type="hidden" name="requestId" value={request.id} />
                 <input type="hidden" name="decision" value="decline" />
                 <button
@@ -105,7 +109,7 @@ export function OutgoingFriendRequests({ requests }: { requests: OutgoingRequest
   }, [state?.success, router, startTransition]);
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/70 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
       <h2 className="text-xl font-semibold">Convites enviados</h2>
       <p className="mb-4 text-sm text-neutral-400">
         Você pode cancelar o convite se tiver convidado a pessoa por engano ou quiser ajustar o nome de usuário.
@@ -115,7 +119,10 @@ export function OutgoingFriendRequests({ requests }: { requests: OutgoingRequest
       <ul className="space-y-4 text-sm text-neutral-300">
         {requests.length === 0 && <li>Nenhum convite pendente.</li>}
         {requests.map((request) => (
-          <li key={request.id} className="rounded-md border border-neutral-800 bg-neutral-950/60 p-4">
+          <li
+            key={request.id}
+            className="rounded-xl border border-white/10 bg-neutral-950/80 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+          >
             <div className="flex flex-col gap-1">
               <span className="font-semibold text-neutral-100">
                 {request.recipient.name ?? request.recipient.username}
@@ -127,7 +134,7 @@ export function OutgoingFriendRequests({ requests }: { requests: OutgoingRequest
                 Enviado em {new Date(request.createdAt).toLocaleString("pt-BR")}
               </span>
             </div>
-            <form action={formAction} className="mt-3">
+            <form onSubmit={formAction} className="mt-3">
               <input type="hidden" name="requestId" value={request.id} />
               <button
                 type="submit"

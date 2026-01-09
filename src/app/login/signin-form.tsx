@@ -24,7 +24,7 @@ export function LoginForm() {
           if (result?.error) {
             setError(
               result.error === "CredentialsSignin"
-                ? "Codigo invalido. Verifique os caracteres informados."
+                ? "Código inválido. Verifique os caracteres informados."
                 : result.error,
             );
             return;
@@ -36,7 +36,7 @@ export function LoginForm() {
     >
       <div className="space-y-1">
         <label className="text-sm text-neutral-300" htmlFor="login-code">
-          Codigo de acesso
+          Código de acesso
         </label>
         <input
           id="login-code"

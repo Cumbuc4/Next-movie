@@ -16,10 +16,13 @@ export async function POST(request: Request) {
 
   const { itemId } = BodySchema.parse(await request.json());
 
-  await db.listItem.deleteMany({
+  await db.listItem.updateMany({
     where: {
       id: itemId,
       ownerId: userId,
+    },
+    data: {
+      archived: true,
     },
   });
 

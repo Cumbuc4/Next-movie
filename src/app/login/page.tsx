@@ -22,17 +22,23 @@ export default async function LoginPage({ searchParams }: { searchParams?: Promi
       <header className="space-y-3 text-center">
         <h1 className="text-3xl font-semibold">Acesse sua conta</h1>
         <p className="text-neutral-400">
-          Informe o codigo gerado no cadastro para continuar organizando suas listas.
+          Informe o código gerado no cadastro para continuar organizando suas listas.
         </p>
         {showSessionError && (
           <p className="rounded-md border border-yellow-500/40 bg-yellow-500/5 px-3 py-2 text-sm text-yellow-200">
-            Sua sessao anterior expirou ou nao e mais valida. Faca login novamente para continuar.
+            Sua sessão anterior expirou ou não é mais válida. Faça login novamente para continuar.
           </p>
         )}
       </header>
       <LoginForm />
       <p className="text-center text-sm text-neutral-400">
-        Ainda nao tem conta?{" "}
+        Esqueceu o código?{" "}
+        <Link className="font-semibold text-neutral-100 hover:underline" href="/recover">
+          Recuperar acesso
+        </Link>
+      </p>
+      <p className="text-center text-sm text-neutral-400">
+        Ainda não tem conta?{" "}
         <Link className="font-semibold text-neutral-100 hover:underline" href="/register">
           Cadastre-se aqui
         </Link>

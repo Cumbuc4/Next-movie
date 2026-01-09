@@ -8,9 +8,9 @@ const loginLimiter = new PrismaRateLimiter(5 * 60 * 1000, 5);
 
 const providers = [
   Credentials({
-    name: "Codigo de acesso",
+    name: "Código de acesso",
     credentials: {
-      loginCode: { label: "Codigo", type: "text" },
+      loginCode: { label: "Código", type: "text" },
     },
     authorize: async (credentials) => {
       const loginCode = typeof credentials?.loginCode === "string" ? credentials.loginCode : "";

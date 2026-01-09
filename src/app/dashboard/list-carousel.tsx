@@ -50,7 +50,7 @@ export function ListCarousel({ items, autoRotateMs = 6000 }: ListCarouselProps) 
   if (slides.length === 0) {
     return (
       <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 text-center text-sm text-neutral-400">
-        Nenhum item adicionado ainda. Use a sua lista para comecar a montar um carrossel.
+        Nenhum item adicionado ainda. Use a sua lista para começar a montar um carrossel.
       </div>
     );
   }
@@ -82,13 +82,13 @@ export function ListCarousel({ items, autoRotateMs = 6000 }: ListCarouselProps) 
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-neutral-900 text-sm text-neutral-500">
-            Sem imagem disponivel
+            Sem imagem disponível
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/10" />
         <div className="absolute inset-x-6 bottom-6 space-y-2">
           <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
-            {active.type === "TV" ? "Serie" : "Filme"}
+            {active.type === "TV" ? "Série" : "Filme"}
           </span>
           <h2 className="text-3xl font-semibold text-white md:text-4xl">{active.title}</h2>
           {active.overview && (
@@ -112,7 +112,7 @@ export function ListCarousel({ items, autoRotateMs = 6000 }: ListCarouselProps) 
               type="button"
               onClick={() => goTo(index + 1)}
               className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white transition hover:bg-black/80"
-              aria-label="Proximo"
+              aria-label="Próximo"
             >
               {">"}
             </button>

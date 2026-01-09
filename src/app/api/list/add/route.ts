@@ -10,6 +10,8 @@ const BodySchema = z.object({
   posterPath: z.string().optional(),
   backdropPath: z.string().optional(),
   releaseDate: z.string().optional().nullable(),
+  watched: z.boolean().optional(),
+  archived: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -39,6 +41,8 @@ export async function POST(request: Request) {
       posterPath: body.posterPath,
       backdropPath: body.backdropPath,
       releaseDate: body.releaseDate ? new Date(body.releaseDate) : undefined,
+      watched: body.watched ?? false,
+      archived: body.archived ?? false,
     },
     update: {
       title: body.title,
@@ -46,6 +50,8 @@ export async function POST(request: Request) {
       posterPath: body.posterPath,
       backdropPath: body.backdropPath,
       releaseDate: body.releaseDate ? new Date(body.releaseDate) : undefined,
+      watched: body.watched ?? false,
+      archived: body.archived ?? false,
     },
   });
 
@@ -58,6 +64,8 @@ export async function POST(request: Request) {
     posterPath: item.posterPath,
     backdropPath: item.backdropPath,
     releaseDate: item.releaseDate?.toISOString() ?? null,
+    watched: item.watched,
+    archived: item.archived,
   };
 
   return Response.json(payload, { status: 201 });
