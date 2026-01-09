@@ -1369,11 +1369,12 @@ function ExpandedOverlay({
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  if (!result) {
-    return null;
-  }
-
   useEffect(() => {
+    if (!result) {
+      setTrailerKey(null);
+      setIsLoading(false);
+      return;
+    }
     let ignore = false;
 
     const loadTrailer = async () => {
@@ -1402,7 +1403,11 @@ function ExpandedOverlay({
     return () => {
       ignore = true;
     };
-  }, [result.id, result.type]);
+  }, [result?.id, result?.type]);
+
+  if (!result) {
+    return null;
+  }
 
   const displayImage = result.backdropPath
     ? `${tmdbImageBase}/w1280${result.backdropPath}`
