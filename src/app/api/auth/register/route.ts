@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { db } from "@/lib/db";
 import { generateLoginCode, hashLoginCode } from "@/lib/login-code";
+import { PrismaRateLimiter } from "@/lib/rate-limit";
 
 const USERNAME_REGEX = /^[a-z0-9]+$/i;
+const registerLimiter = new PrismaRateLimiter(10 * 60 * 1000, 5);
 
 const registerSchema = z.object({
   name: z.string().min(2, "Nome muito curto").max(100, "Nome muito longo"),
@@ -17,6 +19,15 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const hit = await registerLimiter.hit(`register:${ip}`);
+    if (!hit.allowed) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Tente novamente em alguns minutos." },
+        { status: 429 },
+      );
+    }
+
     const json = await request.json();
     const { name, username, email } = registerSchema.parse(json);
 

@@ -2,11 +2,13 @@
 import { z, ZodError } from "zod";
 import { db } from "@/lib/db";
 import { generateLoginCode, hashLoginCode } from "@/lib/login-code";
+import { PrismaRateLimiter } from "@/lib/rate-limit";
 
 const recoverSchema = z.object({
   email: z.string().email("Email inválido."),
 });
 
+const recoverLimiter = new PrismaRateLimiter(10 * 60 * 1000, 5);
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendFrom = process.env.RESEND_FROM;
 const resendReplyTo = process.env.RESEND_REPLY_TO;
@@ -60,6 +62,22 @@ const sendRecoverEmail = async (to: string, loginCode: string) => {
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const hit = await recoverLimiter.hit(`recover:${ip}`);
+    if (!hit.allowed) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Tente novamente em alguns minutos." },
+        { status: 429 },
+      );
+    }
+
+    if (!resendApiKey || !resendFrom) {
+      return NextResponse.json(
+        { error: "Recuperacao indisponivel no momento." },
+        { status: 503 },
+      );
+    }
+
     const json = await request.json();
     const { email } = recoverSchema.parse(json);
     const normalizedEmail = email.trim().toLowerCase();
@@ -70,7 +88,7 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ success: true, loginCode: null });
+      return NextResponse.json({ success: true });
     }
 
     let loginCode = "";
@@ -101,18 +119,14 @@ export async function POST(request: Request) {
       data: { loginCodeHash },
     });
 
-    if (resendApiKey && resendFrom) {
-      const sent = await sendRecoverEmail(normalizedEmail, loginCode);
-      if (!sent) {
-        return NextResponse.json(
-          { error: "Falha ao enviar email. Tente novamente." },
-          { status: 502 },
-        );
-      }
-      return NextResponse.json({ success: true, loginCode: null });
+    const sent = await sendRecoverEmail(normalizedEmail, loginCode);
+    if (!sent) {
+      return NextResponse.json(
+        { error: "Falha ao enviar email. Tente novamente." },
+        { status: 502 },
+      );
     }
-
-    return NextResponse.json({ success: true, loginCode });
+    return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

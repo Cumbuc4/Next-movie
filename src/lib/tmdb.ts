@@ -37,7 +37,9 @@ export async function tmdbFetch<T>(path: string, { params, ...init }: FetchOptio
   });
 
   if (!res.ok) {
-    throw new Error(`TMDB request failed: ${res.status} - ${requestUrl}`);
+    const safeUrl = new URL(requestUrl);
+    safeUrl.searchParams.delete("api_key");
+    throw new Error(`TMDB request failed: ${res.status} - ${safeUrl.toString()}`);
   }
 
   return res.json() as Promise<T>;
