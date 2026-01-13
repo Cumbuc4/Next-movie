@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfile, UpdateProfileState } from "../dashboard/actions";
 import { useActionState } from "@/lib/use-action-state";
-import { avatarOptions } from "@/lib/avatar-options";
+import { avatarOptions, isAvatarOption } from "@/lib/avatar-options";
 
 type ProfileFormProps = {
   user: {
@@ -34,7 +34,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const avatarInitial = (user.name ?? user.username ?? "U").slice(0, 1).toUpperCase();
   const avatarPreview = selectedAvatar || "";
   const customAvatar =
-    user.image && !avatarOptions.includes(user.image)
+    user.image && !isAvatarOption(user.image)
       ? { id: "current", label: "Avatar atual", url: user.image }
       : null;
   const avatarChoices = [

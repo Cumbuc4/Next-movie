@@ -5,7 +5,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PrismaRateLimiter } from "@/lib/rate-limit";
-import { avatarOptions } from "@/lib/avatar-options";
+import { isAvatarOption } from "@/lib/avatar-options";
 
 const USERNAME_REGEX = /^[a-z0-9]+$/i;
 const friendRequestLimiter = new PrismaRateLimiter(10 * 60 * 1000, 8);
@@ -318,7 +318,7 @@ export async function updateProfile(
   const nextEmail = rawEmail ? rawEmail.toLowerCase() : null;
   const nextImage = rawImage ? rawImage : null;
 
-  if (nextImage !== (user.image ?? null) && nextImage && !avatarOptions.includes(nextImage)) {
+  if (nextImage !== (user.image ?? null) && nextImage && !isAvatarOption(nextImage)) {
     return { error: "Escolha um avatar v?lido." };
   }
 

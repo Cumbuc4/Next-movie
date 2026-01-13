@@ -10,3 +10,8 @@ export const avatarOptions = [
   "https://api.dicebear.com/7.x/bottts/svg?seed=clapper",
   "https://api.dicebear.com/7.x/bottts/svg?seed=frame",
 ] as const;
+
+export type AvatarOption = (typeof avatarOptions)[number];
+
+export const isAvatarOption = (value: string): value is AvatarOption =>
+  avatarOptions.includes(value as AvatarOption);
